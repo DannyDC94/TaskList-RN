@@ -4,6 +4,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { useTasks } from '../../store/taskStore';
 import { RootStackParams, Task } from '../../types';
+import { getStatusLabel } from '../../constants/statusOptions';
 
 type TaskItemProps = {
   task: Task;
@@ -58,7 +59,7 @@ const TaskItem = ({ task }: TaskItemProps) => {
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.name}>{name}</Text>
-        <Text style={styles.status}>{status}</Text>
+        <Text style={styles.status}>{getStatusLabel(status)}</Text>
       </View>
       <View style={styles.actions}>
         <IconButton

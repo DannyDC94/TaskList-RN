@@ -12,6 +12,6 @@ export type Task = {
   id: string;
   name: string;
   description: string;
-  status: string;
+  status: "pending" | "inProgress" | "complete";
   createdAt: string;
 };
