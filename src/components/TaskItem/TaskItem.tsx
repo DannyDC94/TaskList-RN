@@ -2,14 +2,11 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
+import { useTasks } from '../../store/taskStore';
 import { RootStackParams, Task } from '../../types';
-import { useAsyncStorage } from '../../hooks/useAsyncStorage';
-
-const TASK = '@Task';
 
 type TaskItemProps = {
   task: Task;
-  onCompleteRemove: () => void;
 };
 
 type AddTaskScreenNavigationProp = NativeStackNavigationProp<
@@ -17,10 +14,10 @@ type AddTaskScreenNavigationProp = NativeStackNavigationProp<
   'AddTask'
 >;
 
-const TaskItem = ({ task, onCompleteRemove }: TaskItemProps) => {
+const TaskItem = ({ task }: TaskItemProps) => {
   const { name, status } = task;
   const { navigate } = useNavigation<AddTaskScreenNavigationProp>();
-  const { getAsyncStorage, setAsyncStorage } = useAsyncStorage();
+  const { deleteTask } = useTasks();
 
   const handleEdit = (task: Task) => {
     navigate('AddTask', {
@@ -44,24 +41,8 @@ const TaskItem = ({ task, onCompleteRemove }: TaskItemProps) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const storeTasks = (await getAsyncStorage<Task[]>(TASK)) || [];
-              const taskExists = storeTasks.some(task => task.id === id);
-              if (!taskExists) {
-                Alert.alert('Error', 'La tarea no existe');
-                return;
-              }
-              const filteredTasks = storeTasks.filter(task => task.id !== id);
-              const success = await setAsyncStorage<Task[]>(
-                TASK,
-                filteredTasks,
-              );
-
-              if (success) {
-                onCompleteRemove();
-                Alert.alert('Éxito', 'Tarea eliminada correctamente');
-              } else {
-                Alert.alert('Error', 'No se pudo eliminar la tarea');
-              }
+              deleteTask(id);
+              Alert.alert('Éxito', 'Tarea eliminada correctamente');
             } catch (error) {
               console.error('Error al eliminar tarea:', error);
               Alert.alert('Error', 'Ocurrió un error inesperado');

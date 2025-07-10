@@ -1,9 +1,9 @@
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAsyncStorage } from '../../hooks/useAsyncStorage';
+import { useTasks } from '../../store/taskStore';
 import { RootStackParams, Task } from '../../types';
-import { generateId } from '../../utils/generateId';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
 type AddTaskScreenRouteProp = RouteProp<RootStackParams, 'AddTask'>;
 
@@ -13,6 +13,7 @@ const AddTaskScreen = () => {
   const route = useRoute<AddTaskScreenRouteProp>();
   const { task, mode } = route.params || {};
   const isEditing = mode === 'edit' && task;
+  const { addTask, updateTask } = useTasks();
 
   const initialValues: Task = isEditing
     ? task
@@ -20,11 +21,10 @@ const AddTaskScreen = () => {
         id: '',
         name: '',
         description: '',
-        status: '',
+        status: 'pending',
         createdAt: '',
       };
   const [formData, setFormData] = useState<Task>(initialValues);
-  const { getAsyncStorage, setAsyncStorage } = useAsyncStorage();
   const { goBack } = useNavigation();
 
   const onChangeValues = (field: keyof Task) => (text: string) => {
@@ -38,31 +38,20 @@ const AddTaskScreen = () => {
 
   const createTask = async () => {
     try {
-      const storeTasks = (await getAsyncStorage<Task[]>(TASK)) || [];
-      const newTask: Task = {
-        ...formData,
-        id: generateId(),
+      addTask({
         name: formData.name.trim(),
         description: formData.description.trim(),
-        status: formData.status.trim() || 'pendiente',
-        createdAt: new Date().toISOString(),
-      };
-
-      const updatedTasks = [...storeTasks, newTask];
-      const success = await setAsyncStorage<Task[]>(TASK, updatedTasks);
-      if (success) {
-        Alert.alert('Éxito', 'Tarea guardada correctamente', [
-          {
-            text: 'OK',
-            onPress: () => {
-              setFormData(initialValues);
-              goBack();
-            },
+        status: formData.status.trim() || 'pending',
+      });
+      Alert.alert('Éxito', 'Tarea guardada correctamente', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setFormData(initialValues);
+            goBack();
           },
-        ]);
-      } else {
-        Alert.alert('Error', 'No se pudo guardar la tarea');
-      }
+        },
+      ]);
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Ocurrió un error inesperado');
@@ -71,37 +60,20 @@ const AddTaskScreen = () => {
 
   const editTask = async () => {
     try {
-      const storeTasks = (await getAsyncStorage<Task[]>(TASK)) || [];
-      const updateTask: Task = {
-        ...task,
-        ...formData,
-      };
-
-      const indexUpdate = storeTasks.findIndex(tk => tk.id === task!.id);
-      if (indexUpdate === -1) {
-        console.error('Tarea no encontrada');
-        return false;
-      }
-
-      storeTasks[indexUpdate] = {
-        ...storeTasks[indexUpdate],
-        ...updateTask
-      };
-
-      const success = await setAsyncStorage<Task[]>(TASK, storeTasks);
-      if (success) {
-        Alert.alert('Éxito', 'Tarea actualizada correctamente', [
-          {
-            text: 'OK',
-            onPress: () => {
-              setFormData(initialValues);
-              goBack();
-            },
+      updateTask(task!.id, {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        status: formData.status.trim() || 'pending',
+      });
+      Alert.alert('Éxito', 'Tarea actualizada correctamente', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setFormData(initialValues);
+            goBack();
           },
-        ]);
-      } else {
-        Alert.alert('Error', 'No se pudo guardar la tarea');
-      }
+        },
+      ]);
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Ocurrió un error inesperado');

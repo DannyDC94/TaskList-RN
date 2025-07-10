@@ -1,34 +1,15 @@
-import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
-import React, { useCallback, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParams, Task } from '../../types';
-import { useAsyncStorage } from '../../hooks/useAsyncStorage';
+import { Button, FlatList, StyleSheet, View } from 'react-native';
 import TaskItem from '../../components/TaskItem';
+import { useTasks } from '../../store/taskStore';
+import { RootStackParams } from '../../types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParams>;
 
-const TASK = '@Task';
-
 const HomeScreen = () => {
-  const [tasks, setTask] = useState<Task[]>();
   const { navigate } = useNavigation<NavigationProp>();
-  const { getAsyncStorage } = useAsyncStorage();
-
-  const loadTasks = useCallback(async () => {
-    try {
-      const storeTasks = (await getAsyncStorage<Task[]>(TASK)) || [];
-      setTask(storeTasks);
-    } catch (error) {
-      setTask([]);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadTasks().catch();
-    }, [loadTasks]),
-  );
+  const { tasks } = useTasks();
 
   const handleNewTask = () => {
     navigate('AddTask');
@@ -41,7 +22,7 @@ const HomeScreen = () => {
         style={styles.listTask}
         data={tasks}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => <TaskItem task={item} onCompleteRemove={() => loadTasks()} />}
+        renderItem={({ item }) => <TaskItem task={item}/>}
       ></FlatList>
     </View>
   );
