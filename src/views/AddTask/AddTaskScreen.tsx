@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { statusOptions } from '../../constants/statusOptions';
 import { TaskFormData, taskSchema } from '../../schema/taskSchema';
-import { useTasks } from '../../store/taskStore';
 import { RootStackParams } from '../../types';
+import { useTasks } from '../../hooks/useTasksQuery';
 
 type AddTaskScreenRouteProp = RouteProp<RootStackParams, 'AddTask'>;
 
@@ -22,7 +22,8 @@ const AddTaskScreen = () => {
   const route = useRoute<AddTaskScreenRouteProp>();
   const { task, mode } = route.params || {};
   const isEditing = mode === 'edit' && task;
-  const { addTask, updateTask } = useTasks();
+  // const { addTask, updateTask } = useTasks();
+  const { createTask, updateTask, isCreating, isUpdating } = useTasks();
   const { goBack } = useNavigation();
 
   const {
@@ -34,7 +35,7 @@ const AddTaskScreen = () => {
   } = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      name: '',
+      title: '',
       description: '',
       status: 'pending',
     },
@@ -43,12 +44,12 @@ const AddTaskScreen = () => {
 
   useEffect(() => {
     if (isEditing && task) {
-      setValue('name', task.name);
+      setValue('title', task.title);
       setValue('description', task.description);
       setValue('status', task.status);
     } else {
       reset({
-        name: '',
+        title: '',
         description: '',
         status: 'pending',
       });
@@ -58,30 +59,53 @@ const AddTaskScreen = () => {
   const onSubmit = (data: TaskFormData) => {
     try {
       if (isEditing) {
-        updateTask(task!.id, {
-          name: data.name.trim(),
+        const id = task!.id;
+        const updates = {
+          title: data.title.trim(),
           description: data.description!.trim(),
           status: data.status || 'pending',
-        });
-      } else {
-        addTask({
-          name: data.name.trim(),
-          description: data.description!.trim(),
-          status: data.status || 'pending',
-        });
-      }
-      const textAlert = isEditing
-        ? 'Tarea actualizada correctamente'
-        : 'Tarea creada correctamente';
-      Alert.alert('Éxito', textAlert, [
-        {
-          text: 'OK',
-          onPress: () => {
-            reset();
-            goBack();
+        };
+        updateTask(
+          { id, updates },
+          {
+            onSuccess: () => {
+              Alert.alert('Éxito', 'Tarea actualizada correctamente', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    reset();
+                    goBack();
+                  },
+                },
+              ]);
+            },
+            onError: error => {
+              Alert.alert('Error', `No se pudo actualizar: ${error.message}`);
+            },
           },
-        },
-      ]);
+        );
+      } else {
+        createTask({
+          title: data.title.trim(),
+          description: data.description!.trim(),
+          status: data.status || 'pending',
+        }, {
+          onSuccess: () => {
+            Alert.alert('Éxito', 'Tarea creada correctamente', [
+              {
+                text: 'OK',
+                onPress: () => {
+                  reset();
+                  goBack();
+                },
+              },
+            ]);
+          },
+          onError: error => {
+            Alert.alert('Error', `No se pudo crear: ${error.message}`);
+          },
+        },);
+      }
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Ocurrió un error inesperado');
@@ -96,7 +120,7 @@ const AddTaskScreen = () => {
           <Text style={styles.textLabel}>Nombre:</Text>
           <Controller
             control={control}
-            name="name"
+            name="title"
             rules={{
               required: 'El nombre es obligatorio',
               minLength: {
@@ -106,7 +130,7 @@ const AddTaskScreen = () => {
             }}
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
-                style={[styles.input, errors.name && styles.inputError]}
+                style={[styles.input, errors.title && styles.inputError]}
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -114,8 +138,8 @@ const AddTaskScreen = () => {
               />
             )}
           />
-          {errors.name && (
-            <Text style={styles.errorText}>{errors.name.message}</Text>
+          {errors.title && (
+            <Text style={styles.errorText}>{errors.title.message}</Text>
           )}
         </View>
         <View style={styles.inputContainer}>

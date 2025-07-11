@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button, FlatList, StyleSheet, View } from 'react-native';
 import TaskItem from '../../components/TaskItem';
-import { useTasks } from '../../store/taskStore';
+import { useTasks } from '../../hooks/useTasksQuery';
 import { RootStackParams } from '../../types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParams>;
@@ -14,6 +14,8 @@ const HomeScreen = () => {
   const handleNewTask = () => {
     navigate('AddTask');
   };
+
+  console.log('Task Here', tasks);
 
   return (
     <View style={styles.container}>

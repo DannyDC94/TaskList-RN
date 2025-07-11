@@ -2,12 +2,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
-import { useTasks } from '../../store/taskStore';
-import { RootStackParams, Task } from '../../types';
+import { RootStackParams } from '../../types';
 import { getStatusLabel } from '../../constants/statusOptions';
+import { TaskApiResponse } from '../../schema/taskSchema';
+import useTasks from '../../hooks/useTasksQuery';
 
 type TaskItemProps = {
-  task: Task;
+  task: TaskApiResponse;
 };
 
 type AddTaskScreenNavigationProp = NativeStackNavigationProp<
@@ -16,18 +17,19 @@ type AddTaskScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 const TaskItem = ({ task }: TaskItemProps) => {
-  const { name, status } = task;
+  const { title, status } = task;
   const { navigate } = useNavigation<AddTaskScreenNavigationProp>();
-  const { deleteTask } = useTasks();
+  // const { deleteTask } = useTasks(); // Eliminar Zustand
+  const { deleteTask, isDeleting } = useTasks();
 
-  const handleEdit = (task: Task) => {
+  const handleEdit = (task: TaskApiResponse) => {
     navigate('AddTask', {
       task: task,
       mode: 'edit',
     });
   };
 
-  const handleDeleteWithConfirmation = async (id: Task['id']) => {
+  const handleDeleteWithConfirmation = async (id: TaskApiResponse['id']) => {
     // Mostrar confirmación antes de eliminar
     Alert.alert(
       'Confirmar eliminación',
@@ -58,7 +60,7 @@ const TaskItem = ({ task }: TaskItemProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.name}>{title}</Text>
         <Text style={styles.status}>{getStatusLabel(status)}</Text>
       </View>
       <View style={styles.actions}>
